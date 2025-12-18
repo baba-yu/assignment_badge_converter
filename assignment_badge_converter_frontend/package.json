@@ -1,0 +1,17 @@
+{
+  "name": "frontend",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "gen:external": "docker run --rm -v $PWD:/local openapitools/openapi-generator-cli generate -i /local/openapi/external.yaml -g typescript-fetch -o /local/src/api/external --additional-properties=supportsES6=true,typescriptThreePlus=true",
+    "gen:internal": "docker run --rm -v $PWD:/local openapitools/openapi-generator-cli generate -i /local/openapi/internal.yaml -g typescript-fetch -o /local/src/api/internal --additional-properties=supportsES6=true,typescriptThreePlus=true"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.3",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "vue": "^3.5.25"
+  }
+}

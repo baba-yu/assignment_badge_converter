@@ -1,0 +1,21 @@
+openapi: 3.0.3
+info:
+  title: API
+  version: v1
+paths:
+  /api/v1/internal/health/:
+    get:
+      operationId: api_v1_internal_health_retrieve
+      tags:
+      - api
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+components:
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

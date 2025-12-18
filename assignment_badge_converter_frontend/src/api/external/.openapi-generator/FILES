@@ -1,0 +1,13 @@
+.openapi-generator-ignore
+apis/AuthApi.ts
+apis/HealthApi.ts
+apis/index.ts
+docs/AuthApi.md
+docs/HealthApi.md
+docs/TokenObtainPair.md
+docs/TokenRefresh.md
+index.ts
+models/TokenObtainPair.ts
+models/TokenRefresh.ts
+models/index.ts
+runtime.ts
