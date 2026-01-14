@@ -25,9 +25,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
 
-    "apps.common",
-    "apps.external_api",
-    "apps.internal_api",
+    "core",
+    "api.external",
+    "api.internal",
 ]
 
 MIDDLEWARE = [
@@ -62,6 +62,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+AUTH_USER_MODEL = "core.User"
 
 TEMPLATES = [
     {

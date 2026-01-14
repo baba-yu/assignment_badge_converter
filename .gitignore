@@ -9,6 +9,9 @@ Thumbs.db
 # VS Code
 .vscode/
 
+# Agent
+AGENTS.md
+
 # =========================
 # Jupyter / Data Science
 # =========================
