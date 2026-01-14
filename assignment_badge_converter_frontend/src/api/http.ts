@@ -79,6 +79,36 @@ export async function login(username: string, password: string): Promise<void> {
   setTokens(tokens);
 }
 
+export type SignUpPayload = {
+  username: string;
+  email: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
+};
+
+export type SignUpResponse = {
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+};
+
+export async function signup(payload: SignUpPayload): Promise<SignUpResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/external/auth/signup/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error(`signup failed: ${await parseError(res)}`);
+  }
+
+  return (await res.json()) as SignUpResponse;
+}
+
 export async function internalHealth(): Promise<void> {
   const res = await fetchWithAuth(`${API_BASE}/api/v1/internal/health/`, { method: "GET" });
   if (!res.ok) throw new Error(`internal health failed: ${await parseError(res)}`);
