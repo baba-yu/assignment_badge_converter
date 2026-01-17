@@ -1,27 +1,37 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { signup } from "../api/http";
 
 const router = useRouter();
-const username = ref("");
 const email = ref("");
 const firstName = ref("");
 const lastName = ref("");
 const password = ref("");
 const result = ref<string>("");
+const showToast = ref(false);
+let toastTimer: number | null = null;
+
+watch(result, (value) => {
+  if (!value) return;
+  showToast.value = true;
+  if (toastTimer) window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => {
+    showToast.value = false;
+    toastTimer = null;
+  }, 5000);
+});
 
 async function runSignup() {
   result.value = "running...";
   try {
     const user = await signup({
-      username: username.value,
       email: email.value,
       password: password.value,
       first_name: firstName.value || undefined,
       last_name: lastName.value || undefined,
     });
-    result.value = `OK: signed up ${user.username}`;
+    result.value = `OK: signed up ${user.email}`;
     await router.push("/login");
   } catch (e: any) {
     result.value = `NG: ${e?.message ?? e}`;
@@ -38,10 +48,6 @@ async function runSignup() {
     </header>
 
     <form class="form" @submit.prevent="runSignup">
-      <label class="field">
-        <span>Username</span>
-        <input v-model="username" placeholder="your-handle" autocomplete="username" />
-      </label>
       <label class="field">
         <span>Email</span>
         <input v-model="email" placeholder="you@example.com" autocomplete="email" />
@@ -61,7 +67,14 @@ async function runSignup() {
       <button class="primary" type="submit">Create account</button>
     </form>
 
-    <pre class="result">{{ result }}</pre>
+    <p class="switch">
+      Already using Badge Converter?
+      <RouterLink to="/login">Log in.</RouterLink>
+    </p>
+
+    <transition name="toast">
+      <div v-if="showToast && result" class="toast" role="status">{{ result }}</div>
+    </transition>
   </section>
 </template>
 
@@ -123,11 +136,38 @@ async function runSignup() {
   cursor: pointer;
 }
 
-.result {
-  margin-top: 16px;
-  background: #f8fafc;
-  padding: 12px;
-  border-radius: 12px;
-  min-height: 44px;
+.switch {
+  margin: 8px 0 0;
+  color: #4b5563;
+}
+
+.switch a {
+  color: #f05d23;
+  font-weight: 600;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 999px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
+  max-width: min(520px, 90vw);
+  text-align: center;
+}
+
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 8px);
 }
 </style>

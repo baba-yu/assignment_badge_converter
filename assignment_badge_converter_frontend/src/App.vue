@@ -1,11 +1,62 @@
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { clearTokens } from "./api/auth";
+
+const router = useRouter();
+const route = useRoute();
+const menuOpen = ref(false);
+
+const section = computed(() => {
+  if (route.path.startsWith("/signup") || route.path.startsWith("/login")) return "auth";
+  if (route.path.startsWith("/tenant")) return "tenant";
+  if (route.path.startsWith("/app") || route.path.startsWith("/user-management")) return "app";
+  return "auth";
+});
+
+function logout() {
+  clearTokens();
+  router.push("/login");
+}
+
+function toggleMenu() {
+  menuOpen.value = !menuOpen.value;
+}
+
+function closeMenu() {
+  menuOpen.value = false;
+}
+</script>
+
 <template>
   <div class="page">
     <header class="nav">
       <h1 class="brand">Badge Converter</h1>
-      <nav class="tabs">
-        <RouterLink to="/login" class="tab" active-class="tab--active">Login</RouterLink>
-        <RouterLink to="/signup" class="tab" active-class="tab--active">Sign up</RouterLink>
+      <div v-if="section !== 'auth'" class="menu">
+        <button class="menu__toggle" type="button" @click="toggleMenu" aria-haspopup="true" :aria-expanded="menuOpen">
+          Menu
+        </button>
+        <nav v-if="menuOpen" class="menu__panel">
+          <template v-if="section === 'tenant'">
+            <RouterLink to="/tenant" class="menu__item" active-class="menu__item--active" @click="closeMenu">
+              Tenant selection
+            </RouterLink>
+            <button class="menu__item menu__item--danger" type="button" @click="logout">Logout</button>
+          </template>
+        <template v-else-if="section === 'app'">
+          <RouterLink to="/app" class="menu__item" active-class="menu__item--active" @click="closeMenu">
+            Chat
+          </RouterLink>
+          <RouterLink to="/user-management" class="menu__item" active-class="menu__item--active" @click="closeMenu">
+            User management
+          </RouterLink>
+          <RouterLink to="/tenant" class="menu__item" @click="closeMenu">
+            Switch tenant
+          </RouterLink>
+          <button class="menu__item menu__item--danger" type="button" @click="logout">Logout</button>
+        </template>
       </nav>
+      </div>
     </header>
 
     <main class="content">
@@ -46,25 +97,57 @@
   letter-spacing: 0.04em;
 }
 
-.tabs {
+.menu {
+  position: relative;
   display: flex;
-  gap: 8px;
-  background: #0d0f12;
-  padding: 6px;
-  border-radius: 999px;
+  justify-content: flex-end;
 }
 
-.tab {
-  color: #f7f7f7;
-  text-decoration: none;
+.menu__toggle {
+  border: 1px solid #0d0f12;
+  border-radius: 999px;
   padding: 8px 16px;
-  border-radius: 999px;
+  background: #0d0f12;
+  color: #f7f7f7;
   font-weight: 600;
+  cursor: pointer;
 }
 
-.tab--active {
-  background: #f7f7f7;
+.menu__panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  display: grid;
+  min-width: 220px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+  z-index: 10;
+}
+
+.menu__item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 12px;
   color: #0d0f12;
+  text-decoration: none;
+  font-weight: 600;
+  text-align: left;
+  background: transparent;
+}
+
+.menu__item:hover {
+  background: #f1f5f9;
+}
+
+.menu__item--active {
+  background: #eef2ff;
+  color: #1e28b8;
+}
+
+.menu__item--danger {
+  color: #d72638;
 }
 
 .content {

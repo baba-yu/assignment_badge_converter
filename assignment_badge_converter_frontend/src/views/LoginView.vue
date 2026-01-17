@@ -1,30 +1,36 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { internalHealth, login } from "../api/http";
+import { ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import { login } from "../api/http";
 
-const username = ref("");
+const router = useRouter();
+const email = ref("");
 const password = ref("");
 const result = ref<string>("");
+const showToast = ref(false);
+let toastTimer: number | null = null;
+
+watch(result, (value) => {
+  if (!value) return;
+  showToast.value = true;
+  if (toastTimer) window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => {
+    showToast.value = false;
+    toastTimer = null;
+  }, 5000);
+});
 
 async function runLogin() {
   result.value = "running...";
   try {
-    await login(username.value, password.value);
+    await login(email.value, password.value);
     result.value = "OK: logged in";
+    await router.push("/tenant");
   } catch (e: any) {
     result.value = `NG: ${e?.message ?? e}`;
   }
 }
 
-async function runInternalHealth() {
-  result.value = "running...";
-  try {
-    await internalHealth();
-    result.value = "OK: internal health";
-  } catch (e: any) {
-    result.value = `NG: ${e?.message ?? e}`;
-  }
-}
 </script>
 
 <template>
@@ -32,13 +38,13 @@ async function runInternalHealth() {
     <header class="card__header">
       <p class="eyebrow">Welcome back</p>
       <h2>Login to continue</h2>
-      <p class="muted">Use your username and password.</p>
+      <p class="muted">Use your email and password.</p>
     </header>
 
     <form class="form" @submit.prevent="runLogin">
       <label class="field">
-        <span>Username</span>
-        <input v-model="username" placeholder="username" autocomplete="username" />
+        <span>Email</span>
+        <input v-model="email" placeholder="you@example.com" autocomplete="email" />
       </label>
       <label class="field">
         <span>Password</span>
@@ -47,11 +53,14 @@ async function runInternalHealth() {
       <button class="primary" type="submit">Login</button>
     </form>
 
-    <div class="actions">
-      <button class="ghost" type="button" @click="runInternalHealth">Internal health</button>
-    </div>
+    <p class="switch">
+      New to Badge Converter?
+      <RouterLink to="/signup">Sign up.</RouterLink>
+    </p>
 
-    <pre class="result">{{ result }}</pre>
+    <transition name="toast">
+      <div v-if="showToast && result" class="toast" role="status">{{ result }}</div>
+    </transition>
   </section>
 </template>
 
@@ -116,24 +125,38 @@ async function runInternalHealth() {
   cursor: pointer;
 }
 
-.actions {
-  margin-top: 12px;
+.switch {
+  margin: 8px 0 0;
+  color: #cbd5f5;
 }
 
-.ghost {
-  border: 1px solid #334155;
+.switch a {
+  color: #f8d477;
+  font-weight: 600;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: #fff;
+  padding: 12px 18px;
   border-radius: 999px;
-  padding: 10px 16px;
-  background: transparent;
-  color: #f8fafc;
-  cursor: pointer;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
+  max-width: min(520px, 90vw);
+  text-align: center;
 }
 
-.result {
-  margin-top: 16px;
-  background: #111827;
-  padding: 12px;
-  border-radius: 12px;
-  min-height: 44px;
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 8px);
 }
 </style>

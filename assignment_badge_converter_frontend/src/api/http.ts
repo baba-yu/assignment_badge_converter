@@ -64,11 +64,11 @@ export async function fetchWithAuth(input: string, init: RequestInit = {}): Prom
   return fetch(input, { ...init, headers });
 }
 
-export async function login(username: string, password: string): Promise<void> {
+export async function login(email: string, password: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/v1/external/auth/token/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ email, password }),
   });
 
   if (!res.ok) {
@@ -80,7 +80,6 @@ export async function login(username: string, password: string): Promise<void> {
 }
 
 export type SignUpPayload = {
-  username: string;
   email: string;
   password: string;
   first_name?: string;
@@ -89,7 +88,6 @@ export type SignUpPayload = {
 
 export type SignUpResponse = {
   id: number;
-  username: string;
   email: string;
   first_name: string;
   last_name: string;
@@ -109,7 +107,104 @@ export async function signup(payload: SignUpPayload): Promise<SignUpResponse> {
   return (await res.json()) as SignUpResponse;
 }
 
-export async function internalHealth(): Promise<void> {
-  const res = await fetchWithAuth(`${API_BASE}/api/v1/internal/health/`, { method: "GET" });
-  if (!res.ok) throw new Error(`internal health failed: ${await parseError(res)}`);
+export type Tenant = {
+  id: number;
+  name: string;
+  created_at: string;
+  deleted_at?: string | null;
+};
+
+export type TenantSelectPayload = {
+  tenant_id?: number;
+  name?: string;
+};
+
+export async function tenantSelect(payload: TenantSelectPayload): Promise<Tenant> {
+  const res = await fetchWithAuth(`${API_BASE}/api/v1/external/tenants/select/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`tenant select failed: ${await parseError(res)}`);
+  return (await res.json()) as Tenant;
+}
+
+export type TenantListResponse = {
+  tenants: Tenant[];
+};
+
+export async function fetchTenants(): Promise<TenantListResponse> {
+  const res = await fetchWithAuth(`${API_BASE}/api/v1/external/tenants/`, { method: "GET" });
+  if (!res.ok) throw new Error(`tenant list failed: ${await parseError(res)}`);
+  return (await res.json()) as TenantListResponse;
+}
+
+export type TenantUser = {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+};
+
+export type TenantUsersResponse = {
+  viewer_role: string;
+  tenant: Tenant;
+  users: TenantUser[];
+};
+
+export type TenantInvitePayload = {
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  role: string;
+};
+
+export async function fetchTenantUsers(): Promise<TenantUsersResponse> {
+  const res = await fetchWithAuth(`${API_BASE}/api/v1/external/tenants/users/`, { method: "GET" });
+  if (!res.ok) throw new Error(`tenant users failed: ${await parseError(res)}`);
+  return (await res.json()) as TenantUsersResponse;
+}
+
+export async function inviteTenantUser(payload: TenantInvitePayload): Promise<TenantUser> {
+  const res = await fetchWithAuth(`${API_BASE}/api/v1/external/tenants/users/invite/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`tenant invite failed: ${await parseError(res)}`);
+  return (await res.json()) as TenantUser;
+}
+
+export async function updateTenantUserRole(userId: number, role: string): Promise<TenantUser> {
+  const res = await fetchWithAuth(`${API_BASE}/api/v1/external/tenants/users/${userId}/role/`, {
+    method: "PATCH",
+    body: JSON.stringify({ role }),
+  });
+  if (!res.ok) throw new Error(`tenant role update failed: ${await parseError(res)}`);
+  return (await res.json()) as TenantUser;
+}
+
+export async function deleteTenant(tenantId: number): Promise<Tenant> {
+  const res = await fetchWithAuth(`${API_BASE}/api/v1/external/tenants/${tenantId}/delete/`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error(`tenant delete failed: ${await parseError(res)}`);
+  return (await res.json()) as Tenant;
+}
+
+export async function chatStream(message: string, onChunk: (chunk: string) => void): Promise<void> {
+  const res = await fetchWithAuth(`${API_BASE}/api/v1/external/chat/stream/`, {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) throw new Error(`chat failed: ${await parseError(res)}`);
+  if (!res.body) throw new Error("chat failed: no response body");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    if (value) onChunk(decoder.decode(value, { stream: true }));
+  }
 }
